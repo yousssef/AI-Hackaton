@@ -12,6 +12,7 @@ Returns a FilterResult for each posting with pass/fail and reasons.
 
 import hashlib
 import re
+import socket
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -28,9 +29,12 @@ SCAM_PATTERNS = [
     (r"guaranteed\s+(income|pay|salary|\$)", "guaranteed income"),
     (r"no\s+experience\s+(needed|required|necessary)", "no experience needed"),
     (r"work\s+from\s+home\s+and\s+earn", "earn-from-home pitch"),
-    (r"starter\s+kit|starter\s+pack|registration\s+fee|joining\s+fee", "upfront payment request"),
-    (r"(contact|reach|message)\s+(us\s+)?(on|via|through|at)\s+(telegram|whatsapp)", "Telegram/WhatsApp recruiter contact"),
-    (r"recruiter.*@(gmail|yahoo|hotmail|outlook)\.(com|ca)", "free-email recruiter address"),
+    (r"starter\s+kit|starter\s+pack|registration\s+fee|joining\s+fee",
+     "upfront payment request"),
+    (r"(contact|reach|message)\s+(us\s+)?(on|via|through|at)\s+(telegram|whatsapp)",
+     "Telegram/WhatsApp recruiter contact"),
+    (r"recruiter.*@(gmail|yahoo|hotmail|outlook)\.(com|ca)",
+     "free-email recruiter address"),
     (r"wire\s+transfer|western\s+union|moneygram", "suspicious payment method"),
     (r"multi.?level|mlm|network\s+marketing|pyramid", "MLM indicator"),
     (r"get\s+paid\s+(daily|weekly)\s+via\s+paypal", "PayPal daily/weekly pay claim"),
@@ -38,25 +42,31 @@ SCAM_PATTERNS = [
 
 FAKE_REMOTE_PATTERNS = [
     (r"must\s+be\s+located\s+(in|near|within)", "location restriction"),
-    (r"(hybrid|in.?office|on.?site)\s*(position|role|work|schedule)?", "hybrid/office requirement"),
-    (r"occasional(ly)?\s*(travel|visit|attend)\s*(to|the)?\s*(office|hq|headquarters)", "occasional office visit"),
+    (r"(hybrid|in.?office|on.?site)\s*(position|role|work|schedule)?",
+     "hybrid/office requirement"),
+    (r"occasional(ly)?\s*(travel|visit|attend)\s*(to|the)?\s*(office|hq|headquarters)",
+     "occasional office visit"),
     (r"within\s+\d+\s+(miles|km|kilometers)\s+of", "proximity requirement"),
-    (r"(toronto|vancouver|montreal|calgary|ottawa|london|new york|san francisco|chicago)\s+(office|hq|based)", "city-office requirement"),
+    (r"(toronto|vancouver|montreal|calgary|ottawa|london|new york|san francisco|chicago)\s+(office|hq|based)",
+     "city-office requirement"),
     (r"(commute|commuting)\s+required", "commute requirement"),
 ]
 
 NEWCOMER_UNFRIENDLY_PATTERNS = [
     (r"canadian\s+(work\s+)?experience\s+required", "requires Canadian experience"),
-    (r"must\s+have\s+.{0,30}canadian\s+experience", "requires Canadian experience"),
+    (r"must\s+have\s+.{0,30}canadian\s+experience",
+     "requires Canadian experience"),
     (r"only\s+canadian\s+citizens", "Canadian citizens only"),
 ]
 
 NEWCOMER_FRIENDLY_PATTERNS = [
-    (r"visa\s+sponsorship\s+(available|provided|offered|considered)", "visa sponsorship offered"),
+    (r"visa\s+sponsorship\s+(available|provided|offered|considered)",
+     "visa sponsorship offered"),
     (r"(open|welcome|encourage).*newcomer", "newcomer-friendly language"),
     (r"no\s+canadian\s+experience\s+required", "no Canadian experience required"),
     (r"candidates\s+from\s+(any|all)\s+countr", "open to all countries"),
-    (r"work\s+from\s+(anywhere|any\s+country|any\s+location|worldwide)", "worldwide eligibility"),
+    (r"work\s+from\s+(anywhere|any\s+country|any\s+location|worldwide)",
+     "worldwide eligibility"),
 ]
 
 
@@ -76,6 +86,8 @@ class FilterResult:
     newcomer_friendly_signals: list[str] = field(default_factory=list)
     age_days: Optional[int] = None
     is_stale: bool = False   # >14 days but ≤30
+    # None = not checked (no domain available)
+    domain_exists: Optional[bool] = None
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +122,19 @@ def _scan_patterns(text: str, patterns: list[tuple[str, str]]) -> list[str]:
     return found
 
 
+def _check_domain_exists(domain: Optional[str]) -> Optional[bool]:
+    """DNS-resolve the company domain. Returns None if domain is missing/unknown."""
+    if not domain or domain in ("unknown", ""):
+        return None
+    # Strip protocol/path if accidentally included
+    domain = re.sub(r"https?://", "", domain).split("/")[0].strip()
+    try:
+        socket.getaddrinfo(domain, None)
+        return True
+    except socket.gaierror:
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Deduplication
 # ---------------------------------------------------------------------------
@@ -119,7 +144,8 @@ class DuplicateDetector:
         self._seen: set[str] = set()
 
     def _hash(self, posting: Posting) -> str:
-        date_str = posting.posted_at.strftime("%Y-%m-%d") if posting.posted_at else "unknown"
+        date_str = posting.posted_at.strftime(
+            "%Y-%m-%d") if posting.posted_at else "unknown"
         raw = f"{posting.company.lower().strip()}-{posting.title.lower().strip()}-{date_str}"
         return hashlib.md5(raw.encode()).hexdigest()
 
@@ -161,7 +187,8 @@ def apply_filters(
             continue
 
         # 2. Age check
-        passes_age, drop_reason, age_days, is_stale = _check_age(posting, max_age_days)
+        passes_age, drop_reason, age_days, is_stale = _check_age(
+            posting, max_age_days)
         result.age_days = age_days
         result.is_stale = is_stale
         if not passes_age:
@@ -180,11 +207,19 @@ def apply_filters(
             continue
 
         # 4. Fake-remote detection (flag but don't hard-drop — LLM will score it)
-        result.fake_remote_signals = _scan_patterns(combined_text, FAKE_REMOTE_PATTERNS)
+        result.fake_remote_signals = _scan_patterns(
+            combined_text, FAKE_REMOTE_PATTERNS)
 
         # 5. Newcomer signals (informational)
-        result.newcomer_unfriendly_signals = _scan_patterns(combined_text, NEWCOMER_UNFRIENDLY_PATTERNS)
-        result.newcomer_friendly_signals = _scan_patterns(combined_text, NEWCOMER_FRIENDLY_PATTERNS)
+        result.newcomer_unfriendly_signals = _scan_patterns(
+            combined_text, NEWCOMER_UNFRIENDLY_PATTERNS)
+        result.newcomer_friendly_signals = _scan_patterns(
+            combined_text, NEWCOMER_FRIENDLY_PATTERNS)
+
+        # 6. Company domain existence check (flag only — not a hard drop)
+        result.domain_exists = _check_domain_exists(posting.company_domain)
+        if result.domain_exists is False:
+            result.flags.append("company domain does not resolve")
 
         results.append(result)
 

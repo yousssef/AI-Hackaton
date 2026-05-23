@@ -5,6 +5,7 @@ Run with: uvicorn main:app --reload --port 8000
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from db.database import engine
 from db.schema import create_tables
@@ -28,16 +29,36 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
+_scheduler = BackgroundScheduler(daemon=True)
+
 
 @app.on_event("startup")
 async def startup():
-    """Create DB tables and run an initial pipeline pass on startup."""
+    """Create DB tables, run initial pipeline, then schedule refresh every 6 hours."""
     create_tables(engine)
     print("[startup] DB tables ready")
     print("[startup] Running initial pipeline...")
     run_pipeline()
 
+    _scheduler.add_job(run_pipeline, "interval",
+                       hours=6, id="pipeline_refresh")
+    _scheduler.start()
+    print("[startup] Scheduler started — pipeline refreshes every 6 hours")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    if _scheduler.running:
+        _scheduler.shutdown(wait=False)
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "ingest_mode": settings.ingest_mode, "classifier_mode": settings.classifier_mode}
+    job = _scheduler.get_job("pipeline_refresh")
+    next_run = job.next_run_time.isoformat() if job and job.next_run_time else None
+    return {
+        "status": "ok",
+        "ingest_mode": settings.ingest_mode,
+        "classifier_mode": settings.classifier_mode,
+        "next_scheduled_refresh": next_run,
+    }

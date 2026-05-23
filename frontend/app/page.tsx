@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://ai-hackatonn-production.up.railway.app";
 
 interface Posting {
   id: number;
@@ -19,6 +19,7 @@ interface Posting {
   newcomer_friendly_signals: string[];
   rationale: string;
   source_url: string;
+  seniority: string;
 }
 
 const ROLE_FAMILIES = ["all", "engineering", "design", "marketing", "product", "data", "finance", "hr", "sales", "support"];
@@ -71,6 +72,11 @@ function PostingCard({ posting, onFeedback }: { posting: Posting; onFeedback: (i
         {posting.genuinely_remote && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
             🌍 Verified Remote
+          </span>
+        )}
+        {posting.seniority && posting.seniority !== "any" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 capitalize">
+            {posting.seniority}
           </span>
         )}
         {posting.newcomer_friendly_signals?.length > 0 && (
@@ -203,9 +209,8 @@ export default function Home() {
               <button
                 key={rf}
                 onClick={() => setRoleFamily(rf)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors border ${
-                  roleFamily === rf ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-                }`}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors border ${roleFamily === rf ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                  }`}
               >
                 {rf.charAt(0).toUpperCase() + rf.slice(1)}
               </button>
@@ -216,9 +221,8 @@ export default function Home() {
               <button
                 key={d}
                 onClick={() => setDays(d)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                  days === d ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                }`}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${days === d ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                  }`}
               >
                 Last {d} days
               </button>
@@ -233,7 +237,7 @@ export default function Home() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-sm text-red-700">
-            {error} — make sure the backend is running on port 8000.
+            {error}
           </div>
         )}
 

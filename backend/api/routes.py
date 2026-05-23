@@ -8,6 +8,9 @@ POST /api/refresh        — trigger a fresh pipeline run
 GET /api/export/csv      — CSV download of current feed
 """
 
+from models import RankedPosting, FeedbackSignal
+from db.schema import PostingORM, VerificationORM, FeedbackORM
+from db.database import get_db_dependency
 import json
 import csv
 import io
@@ -18,18 +21,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from db.database import get_db_dependency
-from db.schema import PostingORM, VerificationORM, FeedbackORM
-from models import RankedPosting, FeedbackSignal
 
 router = APIRouter()
 
 
 def _build_ranked_posting(p: PostingORM) -> dict:
     v = p.verification
+    from rank.ranker import detect_seniority
     return {
         "id": p.id,
         "source": p.source,
@@ -46,12 +48,14 @@ def _build_ranked_posting(p: PostingORM) -> dict:
         "scam_likelihood": v.scam_likelihood if v else 1.0,
         "newcomer_friendly_signals": json.loads(v.newcomer_friendly_signals or "[]") if v else [],
         "rationale": v.rationale if v else "",
+        "seniority": detect_seniority(p.title, p.description or ""),
     }
 
 
 @router.get("/postings")
 def get_postings(
-    role_family: Optional[str] = Query(None, description="Filter by role family (engineering, design, etc.)"),
+    role_family: Optional[str] = Query(
+        None, description="Filter by role family (engineering, design, etc.)"),
     days: int = Query(14, description="Max posting age in days"),
     limit: int = Query(50, description="Max results to return"),
     db: Session = Depends(get_db_dependency),
@@ -86,7 +90,8 @@ def get_posting(posting_id: int, db: Session = Depends(get_db_dependency)):
     # Include full description for detail view
     result["description"] = p.description
     if p.verification:
-        result["employer_legitimacy_signals"] = json.loads(p.verification.employer_legitimacy_signals or "[]")
+        result["employer_legitimacy_signals"] = json.loads(
+            p.verification.employer_legitimacy_signals or "[]")
         result["remote_confidence"] = p.verification.remote_confidence
         result["role_clarity"] = p.verification.role_clarity
     return result
@@ -94,12 +99,14 @@ def get_posting(posting_id: int, db: Session = Depends(get_db_dependency)):
 
 @router.post("/feedback")
 def submit_feedback(feedback: FeedbackSignal, db: Session = Depends(get_db_dependency)):
-    posting = db.query(PostingORM).filter(PostingORM.id == feedback.posting_id).first()
+    posting = db.query(PostingORM).filter(
+        PostingORM.id == feedback.posting_id).first()
     if not posting:
         raise HTTPException(status_code=404, detail="Posting not found")
 
     if feedback.signal not in ("up", "down"):
-        raise HTTPException(status_code=400, detail="signal must be 'up' or 'down'")
+        raise HTTPException(
+            status_code=400, detail="signal must be 'up' or 'down'")
 
     fb = FeedbackORM(
         posting_id=feedback.posting_id,
@@ -161,5 +168,6 @@ def export_csv(
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=verified_remote_jobs.csv"},
+        headers={
+            "Content-Disposition": "attachment; filename=verified_remote_jobs.csv"},
     )
