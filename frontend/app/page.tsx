@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://ai-hackatonn-production.up.railway.app";
 
 interface Posting {
   id: number;
