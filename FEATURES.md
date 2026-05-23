@@ -76,7 +76,7 @@
 | 2.6 | **LLM classification prompt** — structured JSON output per posting | 🔴 P0 | M | — | ✅ DONE | `verify/llm.py` — returns all 9 fields including trust_score + rationale |
 | 2.7 | **Batch API calls** — 10–20 postings per call | 🔴 P0 | S | — | ✅ DONE | `classify_live()` batches by 10; cost-efficient |
 | 2.8 | **Persist LLM response JSON** to `verifications` table | 🔴 P0 | XS | — | ✅ DONE | Full JSON stored in `VerificationORM` |
-| 2.9 | **Prompt validation** — labeled test set, ≥85% agreement | 🟡 P1 | M | — | ⬜ TODO | Day 2 morning with live API key |
+| 2.9 | **Prompt validation** — labeled test set, ≥85% agreement | 🟡 P1 | M | — | ✅ DONE | `tests/test_prompt_validation.py` — 30 labeled postings, 4 test cases, all passing |
 | 2.10 | **Temperature locked at 0.0–0.2** | 🔴 P0 | XS | — | ✅ DONE | `temperature=0.1` hardcoded in `classify_live()` |
 | 2.11 | **Mock classifier** — deterministic scores without API | 🔴 P0 | S | — | ✅ DONE | `classify_mock()` — regex heuristics, fully tested |
 | 2.12 | **Newcomer-friendliness signals** detection | 🟡 P1 | S | — | ✅ DONE | 4 patterns in rules + boosted in mock + live classifier prompt |
@@ -196,7 +196,7 @@
 | Layer 2 — Verification | 8 | 8 | 3 | 4 |
 | Layer 3 — Ranking | 1 | 1 | 4 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **18** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **19** | **20** |
 
-**All 26 P0 features shipped. 18/20 P1s done.**
+**All 26 P0 features shipped. 19/20 P1s done.**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.
