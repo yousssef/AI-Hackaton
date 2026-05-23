@@ -164,6 +164,16 @@ def get_postings(mode: str = "mock") -> list[Posting]:
         except Exception as exc:
             print(f"[ingest] RemoteOK merge failed (non-fatal): {exc}")
 
+        # Merge Remotive postings
+        try:
+            from ingest.remotive import fetch_remotive
+            remotive_postings = fetch_remotive()
+            postings = postings + remotive_postings
+            print(
+                f"[ingest] Combined total: {len(postings)} postings (+ Remotive)")
+        except Exception as exc:
+            print(f"[ingest] Remotive merge failed (non-fatal): {exc}")
+
         if not postings:
             print("[wwr] Live fetch returned 0 postings — falling back to mock")
             return fetch_postings_mock()
