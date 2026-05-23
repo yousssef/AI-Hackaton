@@ -64,7 +64,7 @@
 | # | Feature | Priority | Effort | Owner | Status | Notes |
 |---|---------|----------|--------|-------|--------|-------|
 | 2.1 | **Posting age filter** — drop >30 days, flag >14 days | 🔴 P0 | XS | — | ✅ DONE | `verify/rules.py` — `_check_age()` |
-| 2.2 | **Company existence check** — domain resolves? | 🟡 P1 | S | — | ⬜ TODO | DNS/Clearbit check — add Day 2 |
+| 2.2 | **Company existence check** — domain resolves? | 🟡 P1 | S | — | ✅ DONE | `_check_domain_exists()` in `verify/rules.py` — DNS via `socket`; flags non-resolving domains, not a hard drop |
 | 2.3 | **Red-flag language scanner** — regex for scam patterns | 🔴 P0 | S | — | ✅ DONE | 10 patterns: income claims, Telegram, PayPal, starter kits, MLM, etc. |
 | 2.4 | **Remote authenticity checker** — detect fake-remote language | 🔴 P0 | S | — | ✅ DONE | 6 patterns: hybrid, must be located, proximity, commute, etc. |
 | 2.5 | **Duplicate detection** — hash on (company + title + posted_date) | 🔴 P0 | XS | — | ✅ DONE | `DuplicateDetector` in `verify/rules.py` |
@@ -193,10 +193,10 @@
 |-------|---------|----------|---------|----------|
 | Layer 0 — Infra | 4 | 4 | 3 | 4 |
 | Layer 1 — Ingestion | 4 | 4 | 1 | 4 |
-| Layer 2 — Verification | 8 | 8 | 2 | 4 |
+| Layer 2 — Verification | 8 | 8 | 3 | 4 |
 | Layer 3 — Ranking | 1 | 1 | 3 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **13** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **14** | **20** |
 
-**All 26 P0 features shipped. 13/20 P1s done.**
+**All 26 P0 features shipped. 14/20 P1s done.**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.
