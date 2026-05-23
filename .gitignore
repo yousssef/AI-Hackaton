@@ -6,6 +6,7 @@ __pycache__/
 .env
 *.db
 .venv/
+.venv312/
 venv/
 
 # Node
