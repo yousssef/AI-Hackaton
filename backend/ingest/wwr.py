@@ -5,6 +5,7 @@ to the shared Posting schema.
 Falls back to mock data if INGEST_MODE=mock or the feed is unreachable.
 """
 
+from models import Posting
 import feedparser
 import hashlib
 import re
@@ -17,7 +18,6 @@ from bs4 import BeautifulSoup
 from dateutil import parser as dateutil_parser
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from models import Posting
 
 WWR_FEEDS = [
     "https://weworkremotely.com/remote-jobs.rss",
@@ -102,11 +102,13 @@ def fetch_postings() -> list[Posting]:
             for entry in feed.entries:
                 raw_title = getattr(entry, "title", "")
                 title, company = _parse_company_from_title(raw_title)
-                description_html = getattr(entry, "summary", "") or getattr(entry, "description", "")
+                description_html = getattr(entry, "summary", "") or getattr(
+                    entry, "description", "")
                 description = _clean_html(description_html)
                 source_url = getattr(entry, "link", "")
                 region = getattr(entry, "region", [{}])
-                location_raw = region[0].get("value", "Worldwide") if region else "Worldwide"
+                location_raw = region[0].get(
+                    "value", "Worldwide") if region else "Worldwide"
                 posted_at = _parse_posted_at(entry)
 
                 ext_id = _make_external_id(company, title, posted_at)
@@ -151,6 +153,17 @@ def get_postings(mode: str = "mock") -> list[Posting]:
     """Entry point — mode is 'live' or 'mock'."""
     if mode == "live":
         postings = fetch_postings()
+
+        # Merge RemoteOK postings
+        try:
+            from ingest.remoteok import fetch_remoteok
+            remoteok_postings = fetch_remoteok()
+            postings = postings + remoteok_postings
+            print(
+                f"[ingest] Combined total: {len(postings)} postings (WWR + RemoteOK)")
+        except Exception as exc:
+            print(f"[ingest] RemoteOK merge failed (non-fatal): {exc}")
+
         if not postings:
             print("[wwr] Live fetch returned 0 postings — falling back to mock")
             return fetch_postings_mock()

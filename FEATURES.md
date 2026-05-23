@@ -44,7 +44,7 @@
 | # | Feature | Priority | Effort | Owner | Status | Notes |
 |---|---------|----------|--------|-------|--------|-------|
 | 1.1 | **We Work Remotely** RSS ingestion (all + programming + design + marketing feeds) | 🔴 P0 | S | — | ✅ DONE | `ingest/wwr.py` — feedparser, auto-dedup, role family detection |
-| 1.2 | **RemoteOK** public API ingestion | 🟡 P1 | S | — | ⬜ TODO | Add after core pipeline stable |
+| 1.2 | **RemoteOK** public API ingestion | 🟡 P1 | S | — | ✅ DONE | `ingest/remoteok.py` — merged into `get_postings()` in live mode |
 | 1.3 | **Remotive** public API ingestion | 🟡 P1 | S | — | ⬜ TODO | Add after core pipeline stable |
 | 1.4 | **Lever** postings API ingestion | 🟡 P1 | S | — | ⬜ TODO | Add after core pipeline stable |
 | 1.5 | RSS ingestion for Working Nomads (`feedparser`) | 🟡 P1 | S | — | ⬜ TODO | Fast to add with existing feedparser setup |
@@ -192,11 +192,11 @@
 | Layer | P0 Done | P0 Total | P1 Done | P1 Total |
 |-------|---------|----------|---------|----------|
 | Layer 0 — Infra | 4 | 4 | 3 | 4 |
-| Layer 1 — Ingestion | 4 | 4 | 0 | 4 |
+| Layer 1 — Ingestion | 4 | 4 | 1 | 4 |
 | Layer 2 — Verification | 8 | 8 | 2 | 4 |
 | Layer 3 — Ranking | 1 | 1 | 3 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **12** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **13** | **20** |
 
-**All 26 P0 features shipped. 12/20 P1s done.**
+**All 26 P0 features shipped. 13/20 P1s done.**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.
