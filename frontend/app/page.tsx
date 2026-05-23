@@ -237,7 +237,7 @@ export default function Home() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-sm text-red-700">
-            {error} — make sure the backend is running on port 8000.
+            {error}
           </div>
         )}
 
