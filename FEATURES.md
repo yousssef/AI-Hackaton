@@ -192,11 +192,11 @@
 | Layer | P0 Done | P0 Total | P1 Done | P1 Total |
 |-------|---------|----------|---------|----------|
 | Layer 0 — Infra | 4 | 4 | 3 | 4 |
-| Layer 1 — Ingestion | 4 | 4 | 2 | 4 |
+| Layer 1 — Ingestion | 4 | 4 | 3 | 4 |
 | Layer 2 — Verification | 8 | 8 | 3 | 4 |
 | Layer 3 — Ranking | 1 | 1 | 4 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **16** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **17** | **20** |
 
-**All 26 P0 features shipped. 16/20 P1s done.**
+**All 26 P0 features shipped. 17/20 P1s done.**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.
