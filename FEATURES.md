@@ -32,7 +32,7 @@
 | 0.4 | Config/secrets loader (`python-dotenv`) + `ANTHROPIC_API_KEY` | 🔴 P0 | XS | — | ✅ DONE | `config.py` with pydantic-settings; `.env.example` |
 | 0.5 | Scheduled refresh runner (`apscheduler` or cron — every 4–6h) | 🟡 P1 | S | — | ✅ DONE | `apscheduler==3.10.4` — `BackgroundScheduler` in `main.py`, runs every 6h; `/health` exposes `next_scheduled_refresh` |
 | 0.6 | Seed snapshot of DB for demo fallback (local-mode) | 🟡 P1 | S | — | ✅ DONE | `INGEST_MODE=mock` + 20 static postings in `ingest/mock_data.py` |
-| 0.7 | README with setup instructions + handoff doc | 🟡 P1 | M | — | ⬜ TODO | Day 3 |
+| 0.7 | README with setup instructions + handoff doc | 🟡 P1 | M | — | ✅ DONE | `README.md` — architecture, quick start, env vars, API ref, deploy guide, project structure |
 | 0.8 | Deploy backend to Render / Railway / Fly.io free tier | 🟡 P1 | S | — | ⬜ TODO | Day 3 |
 
 ---
@@ -171,7 +171,7 @@
 - [ ] Fix top classifier failures
 - [ ] 0.8 Deploy backend (Render/Railway)
 - [ ] 4.11 Deploy to Vercel
-- [ ] 0.7 README + handoff doc
+- [x] 0.7 README + handoff doc
 - [ ] Record 3-min Loom as demo backup
 
 **End-of-Day-3 Gate:** Public URL live, ≥50 verified postings, ≥85% verified rate.
@@ -196,7 +196,7 @@
 | Layer 2 — Verification | 8 | 8 | 3 | 4 |
 | Layer 3 — Ranking | 1 | 1 | 4 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **19** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **20** | **20** |
 
-**All 26 P0 features shipped. 19/20 P1s done.**
+**All 26 P0 features shipped. 20/20 P1s done. 🎉**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.
