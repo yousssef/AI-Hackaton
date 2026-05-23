@@ -90,7 +90,7 @@
 | 3.1 | **Hard filter** — `trust_score ≥ 70`, `genuinely_remote = true`, posted ≤14 days | 🔴 P0 | XS | — | ✅ DONE | `rank/ranker.py` — `hard_filter()` |
 | 3.2 | **Soft ranking** — freshness weight (35%) + trust (50%) + newcomer boost (15%) | 🟡 P1 | S | — | ✅ DONE | `soft_rank()` — composite score |
 | 3.3 | **Soft ranking** — newcomer-friendliness boost | 🟡 P1 | S | — | ✅ DONE | Baked into `soft_rank()` |
-| 3.4 | **Seniority distribution** | 🟡 P1 | S | — | ⬜ TODO | Post-MVP |
+| 3.4 | **Seniority distribution** | 🟡 P1 | S | — | ✅ DONE | `detect_seniority()` in `rank/ranker.py` — regex on title/desc; `seniority` field on API + frontend badge |
 | 3.5 | **Role family matching** — filter by role category | 🟡 P1 | M | — | ✅ DONE | `role_family` field + `/api/postings?role_family=engineering` |
 | 3.6 | **Embedding-based semantic matching** | 🟢 P2 | L | — | ⬜ TODO | Stretch — v2 |
 
@@ -194,9 +194,9 @@
 | Layer 0 — Infra | 4 | 4 | 3 | 4 |
 | Layer 1 — Ingestion | 4 | 4 | 1 | 4 |
 | Layer 2 — Verification | 8 | 8 | 3 | 4 |
-| Layer 3 — Ranking | 1 | 1 | 3 | 4 |
+| Layer 3 — Ranking | 1 | 1 | 4 | 4 |
 | Layer 4 — Delivery | 9 | 9 | 4 | 4 |
-| **Total** | **26/26 P0s ✅** | **26** | **14** | **20** |
+| **Total** | **26/26 P0s ✅** | **26** | **15** | **20** |
 
-**All 26 P0 features shipped. 14/20 P1s done.**
+**All 26 P0 features shipped. 15/20 P1s done.**
 Remaining: deploy to Vercel + Render, README, live ingestion validation.

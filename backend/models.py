@@ -13,7 +13,8 @@ class Posting(BaseModel):
     description: str
     location_raw: Optional[str] = None
     remote_type: Optional[str] = None  # "fully_remote", "hybrid", "unknown"
-    role_family: Optional[str] = None  # "engineering", "design", "marketing", etc.
+    # "engineering", "design", "marketing", etc.
+    role_family: Optional[str] = None
     posted_at: Optional[datetime] = None
     fetched_at: datetime = None
 
@@ -67,6 +68,7 @@ class RankedPosting(BaseModel):
     scam_likelihood: float
     newcomer_friendly_signals: list[str]
     rationale: str
+    seniority: Optional[str] = None  # "junior", "mid", "senior", "lead", "any"
 
     class Config:
         from_attributes = True

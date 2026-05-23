@@ -12,13 +12,36 @@ Soft ranking (P1):
   - trust score (higher = higher)
 """
 
+from models import Posting, VerificationResult, RankedPosting
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from typing import Optional
-import sys, os
+import re
+import sys
+import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from models import Posting, VerificationResult, RankedPosting
+
+
+# ---------------------------------------------------------------------------
+# Seniority detection
+# ---------------------------------------------------------------------------
+
+SENIORITY_PATTERNS = [
+    ("junior",  r"junior|entry.?level|entry level|associate|jr\.?\s|new grad|graduate"),
+    ("senior",  r"senior|sr\.?\s|staff\s|principal|experienced"),
+    ("lead",    r"\blead\b|tech lead|team lead|engineering manager|\bem\b"),
+    ("mid",     r"mid.?level|mid level|intermediate"),
+]
+
+
+def detect_seniority(title: str, description: str = "") -> str:
+    """Return 'junior', 'mid', 'senior', 'lead', or 'any'."""
+    text = (title + " " + (description[:300] or "")).lower()
+    for level, pattern in SENIORITY_PATTERNS:
+        if re.search(pattern, text):
+            return level
+    return "any"
 
 
 @dataclass
@@ -62,11 +85,14 @@ def soft_rank(candidates: list[RankCandidate]) -> list[RankCandidate]:
     """Score and sort candidates. Higher = better."""
     for c in candidates:
         age = _days_ago(c.posting.posted_at)
-        freshness = max(0, 14 - age) / 14  # 1.0 = posted today, 0.0 = 14 days ago
-        newcomer_boost = min(len(c.verification.newcomer_friendly_signals) * 0.05, 0.2)
+        # 1.0 = posted today, 0.0 = 14 days ago
+        freshness = max(0, 14 - age) / 14
+        newcomer_boost = min(
+            len(c.verification.newcomer_friendly_signals) * 0.05, 0.2)
         trust_norm = c.verification.trust_score / 100
 
-        c.rank_score = (trust_norm * 0.5) + (freshness * 0.35) + (newcomer_boost * 0.15)
+        c.rank_score = (trust_norm * 0.5) + (freshness *
+                                             0.35) + (newcomer_boost * 0.15)
 
     return sorted(candidates, key=lambda c: c.rank_score, reverse=True)
 
@@ -92,6 +118,7 @@ def to_ranked_postings(candidates: list[RankCandidate]) -> list[RankedPosting]:
             scam_likelihood=v.scam_likelihood,
             newcomer_friendly_signals=v.newcomer_friendly_signals,
             rationale=v.rationale,
+            seniority=detect_seniority(p.title, p.description),
         ))
     return out
 
