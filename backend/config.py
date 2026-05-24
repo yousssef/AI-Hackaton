@@ -8,9 +8,12 @@ class Settings(BaseSettings):
     anthropic_api_key: str = "mock-key"
     ingest_mode: Literal["live", "mock"] = "mock"
     classifier_mode: Literal["live", "mock"] = "mock"
-    database_url: str = f"sqlite:////tmp/jobs.db"
     max_posting_age_days: int = 30
     min_trust_score: int = 70
+
+    # Supabase
+    supabase_url: str = ""
+    supabase_key: str = ""
 
 
 settings = Settings()

@@ -1,73 +1,54 @@
-from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, Text,
-    DateTime, ForeignKey, UniqueConstraint
-)
-from sqlalchemy.orm import DeclarativeBase, relationship
-from datetime import datetime
+"""
+Supabase table definitions.
 
+Run the SQL below once in the Supabase SQL Editor
+(https://supabase.com/dashboard/project/<your-ref>/sql) to create the schema.
 
-class Base(DeclarativeBase):
-    pass
+Paste and execute:
 
+  create table if not exists postings (
+    id          bigserial primary key,
+    source      text not null,
+    source_url  text not null,
+    external_id text not null,
+    company     text,
+    company_domain text,
+    title       text,
+    description text,
+    location_raw text,
+    remote_type text,
+    role_family text,
+    posted_at   timestamptz,
+    fetched_at  timestamptz default now(),
+    constraint uq_source_external_id unique (source, external_id)
+  );
 
-class PostingORM(Base):
-    __tablename__ = "postings"
+  create table if not exists verifications (
+    id                          bigserial primary key,
+    posting_id                  bigint references postings(id) unique not null,
+    trust_score                 integer,
+    genuinely_remote            boolean,
+    remote_confidence           float,
+    scam_likelihood             float,
+    scam_reasons                jsonb default '[]',
+    role_clarity                float,
+    employer_legitimacy_signals jsonb default '[]',
+    newcomer_friendly_signals   jsonb default '[]',
+    rationale                   text,
+    llm_response_json           jsonb,
+    classifier_version          text default '1.0',
+    verified_at                 timestamptz default now()
+  );
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    source = Column(String(64), nullable=False)
-    source_url = Column(String(512), nullable=False)
-    external_id = Column(String(256), nullable=False)
-    company = Column(String(256))
-    company_domain = Column(String(256))
-    title = Column(String(512))
-    description = Column(Text)
-    location_raw = Column(String(256))
-    remote_type = Column(String(64))
-    role_family = Column(String(64))
-    posted_at = Column(DateTime)
-    fetched_at = Column(DateTime, default=datetime.utcnow)
+  create table if not exists feedback (
+    id         bigserial primary key,
+    posting_id bigint references postings(id) not null,
+    user_id    text default 'anonymous',
+    signal     text,
+    note       text,
+    created_at timestamptz default now()
+  );
+"""
 
-    verification = relationship("VerificationORM", back_populates="posting", uselist=False)
-    feedback = relationship("FeedbackORM", back_populates="posting")
-
-    __table_args__ = (
-        UniqueConstraint("source", "external_id", name="uq_source_external_id"),
-    )
-
-
-class VerificationORM(Base):
-    __tablename__ = "verifications"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    posting_id = Column(Integer, ForeignKey("postings.id"), nullable=False, unique=True)
-    trust_score = Column(Integer)
-    genuinely_remote = Column(Boolean)
-    remote_confidence = Column(Float)
-    scam_likelihood = Column(Float)
-    scam_reasons = Column(Text)           # JSON array stored as text
-    role_clarity = Column(Float)
-    employer_legitimacy_signals = Column(Text)   # JSON array
-    newcomer_friendly_signals = Column(Text)     # JSON array
-    rationale = Column(Text)
-    llm_response_json = Column(Text)
-    classifier_version = Column(String(32), default="1.0")
-    verified_at = Column(DateTime, default=datetime.utcnow)
-
-    posting = relationship("PostingORM", back_populates="verification")
-
-
-class FeedbackORM(Base):
-    __tablename__ = "feedback"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    posting_id = Column(Integer, ForeignKey("postings.id"), nullable=False)
-    user_id = Column(String(256), default="anonymous")
-    signal = Column(String(16))   # "up" | "down"
-    note = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    posting = relationship("PostingORM", back_populates="feedback")
-
-
-def create_tables(engine):
-    Base.metadata.create_all(bind=engine)
+# No ORM models needed — Supabase client handles all DB access.
+# This file is kept as the single source of truth for the schema SQL.
