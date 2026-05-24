@@ -32,18 +32,31 @@ app.include_router(router, prefix="/api")
 _scheduler = BackgroundScheduler(daemon=True)
 
 
+def _safe_pipeline():
+    """Run pipeline, catching all exceptions so a failure never kills the server."""
+    try:
+        run_pipeline()
+    except Exception as e:
+        print(f"[pipeline] ERROR during run: {e}")
+
+
 @app.on_event("startup")
 async def startup():
-    """Create DB tables, run initial pipeline, then schedule refresh every 6 hours."""
+    """Create DB tables, kick off pipeline in background, schedule refresh every 6h."""
     create_tables(engine)
     print("[startup] DB tables ready")
-    print("[startup] Running initial pipeline...")
-    run_pipeline()
 
-    _scheduler.add_job(run_pipeline, "interval",
-                       hours=6, id="pipeline_refresh")
+    # Schedule the recurring refresh
+    _scheduler.add_job(_safe_pipeline, "interval", hours=6, id="pipeline_refresh")
     _scheduler.start()
     print("[startup] Scheduler started — pipeline refreshes every 6 hours")
+
+    # Fire an immediate first run in a background thread so the server
+    # becomes available right away (Render health checks won't time out)
+    import threading
+    t = threading.Thread(target=_safe_pipeline, daemon=True)
+    t.start()
+    print("[startup] Initial pipeline run started in background thread")
 
 
 @app.on_event("shutdown")
@@ -62,3 +75,22 @@ def health():
         "classifier_mode": settings.classifier_mode,
         "next_scheduled_refresh": next_run,
     }
+
+
+@app.get("/api/status")
+def status():
+    """Quick liveness + posting count check — useful for Render health monitoring."""
+    from db.database import SessionLocal
+    from db.schema import PostingORM, VerificationORM
+    db = SessionLocal()
+    try:
+        total = db.query(PostingORM).count()
+        verified = db.query(VerificationORM).filter(
+            VerificationORM.trust_score >= 70,
+            VerificationORM.genuinely_remote == True
+        ).count()
+        return {"status": "ok", "total_postings": total, "verified_in_feed": verified}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+    finally:
+        db.close()
