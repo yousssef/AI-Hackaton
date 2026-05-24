@@ -141,16 +141,23 @@ export default function Home() {
   const fetchPostings = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
     try {
       const params = new URLSearchParams({ days: String(days), limit: "50" });
       if (roleFamily !== "all") params.set("role_family", roleFamily);
-      const res = await fetch(`${API_BASE}/api/postings?${params}`);
+      const res = await fetch(`${API_BASE}/api/postings?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       setPostings(await res.json());
       setLastRefreshed(new Date());
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load postings");
+      if (e instanceof Error && e.name === "AbortError") {
+        setError("Request timed out — the server may be waking up. Try refreshing in a moment.");
+      } else {
+        setError(e instanceof Error ? e.message : "Failed to load postings");
+      }
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   }, [roleFamily, days]);
