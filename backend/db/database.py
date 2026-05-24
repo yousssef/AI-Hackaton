@@ -1,37 +1,19 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from contextlib import contextmanager
-import sys
-import os
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+"""
+Supabase client singleton.
+Import get_supabase() wherever you need DB access.
+"""
+from supabase import create_client, Client
 from config import settings
 
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False},  # needed for SQLite
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+_client: Client | None = None
 
 
-@contextmanager
-def get_db() -> Session:
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
-
-
-def get_db_dependency():
-    """FastAPI dependency."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_supabase() -> Client:
+    global _client
+    if _client is None:
+        if not settings.supabase_url or not settings.supabase_key:
+            raise RuntimeError(
+                "SUPABASE_URL and SUPABASE_KEY must be set in .env"
+            )
+        _client = create_client(settings.supabase_url, settings.supabase_key)
+    return _client
