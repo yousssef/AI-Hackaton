@@ -1,6 +1,10 @@
-# Scale Without Borders — Verified Remote Jobs
+<p align="center">
+  <img src="frontend/public/oneboard-logo.jpeg" alt="OneBoard logo" width="180" />
+</p>
 
-An AI-powered remote job board that ingests postings from multiple sources, filters out scams and fake-remote listings, and surfaces only trust-verified opportunities to newcomers to Canada.
+<h1 align="center">OneBoard — Verified Remote Jobs</h1>
+
+<p align="center">An AI-powered remote job board that ingests postings from multiple sources, filters out scams and fake-remote listings, and surfaces only trust-verified opportunities to newcomers to Canada.</p>
 
 ---
 
