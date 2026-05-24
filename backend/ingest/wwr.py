@@ -106,9 +106,14 @@ def fetch_postings() -> list[Posting]:
                     entry, "description", "")
                 description = _clean_html(description_html)
                 source_url = getattr(entry, "link", "")
-                region = getattr(entry, "region", [{}])
-                location_raw = region[0].get(
-                    "value", "Worldwide") if region else "Worldwide"
+                region = getattr(entry, "region", None)
+                if isinstance(region, list) and region:
+                    first = region[0]
+                    location_raw = first.get("value", "Worldwide") if isinstance(first, dict) else str(first)
+                elif isinstance(region, str) and region:
+                    location_raw = region
+                else:
+                    location_raw = "Worldwide"
                 posted_at = _parse_posted_at(entry)
 
                 ext_id = _make_external_id(company, title, posted_at)
