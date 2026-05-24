@@ -81,7 +81,13 @@ def fetch_remoteok(limit: int = 50) -> list[Posting]:
 
         description = _clean_html(job.get("description", ""))
         tags = job.get("tags") or []
-        location_raw = ", ".join(job.get("location") or []) or "Remote"
+        _loc = job.get("location")
+        if isinstance(_loc, list):
+            location_raw = ", ".join(_loc) or "Remote"
+        elif isinstance(_loc, str) and _loc.strip():
+            location_raw = _loc.strip()
+        else:
+            location_raw = "Remote"
         source_url = job.get("url", "")
         if source_url and not source_url.startswith("http"):
             source_url = f"https://remoteok.com{source_url}"
